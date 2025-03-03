@@ -219,6 +219,5 @@ Este workflow en n8n demuestra cómo automatizar el procesamiento de datos integ
 ## Contacto
 
 - **Autor**: [Brian Journeyt Rodriguez Vivas ](brianjourneytrodriguezvivas@gmial.com)
-- **Repositorio**: [https://github.com/brianrodriguezvivas/plaza_medicina](https://github.com/brianrodriguezvivas/plaza_medicina)
-
+- **Repositorio**: [[https://github.com/brianrodriguezvivas/plaza_medicina]([https://github.com/brianrodriguezvivas/plaza_medicina_n8n)
 La estructura modular del workflow permite ampliar o modificar secciones del proceso de forma sencilla, integrando nuevas fuentes de datos o servicios sin necesidad de rehacer el proceso desde cero.
