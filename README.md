@@ -214,4 +214,11 @@ Este workflow en n8n demuestra cómo automatizar el procesamiento de datos integ
 - **Generación de Reportes:**  
   - Creando un resumen integral que facilita el análisis y seguimiento del proceso.
 
+
+
+## Contacto
+
+- **Autor**: [Brian Journeyt Rodriguez Vivas ](brianjourneytrodriguezvivas@gmial.com)
+- **Repositorio**: [https://github.com/brianrodriguezvivas/plaza_medicina](https://github.com/brianrodriguezvivas/plaza_medicina)
+
 La estructura modular del workflow permite ampliar o modificar secciones del proceso de forma sencilla, integrando nuevas fuentes de datos o servicios sin necesidad de rehacer el proceso desde cero.
