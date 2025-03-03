@@ -1,0 +1,465 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1kaipa5kxMUEhJdgMBO_nbQPhSBYxRaJuSFYbFvTRg0U/edit?gid=1153724195#gid=1153724195",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1153724195,
+          "mode": "list",
+          "cachedResultName": "Entregas_Pendientes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kaipa5kxMUEhJdgMBO_nbQPhSBYxRaJuSFYbFvTRg0U/edit#gid=1153724195"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        -120
+      ],
+      "id": "80314150-da73-4f2b-8b56-b54434eaae06",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "eaJMnLGtxUWNr7ul",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recorre todos los elementos de entrada\nfor (const item of $input.all()) {\n  let fecha = item.json.Fecha_Pedido.trim();\n  let fechaFormateada = \"\";\n\n  if (fecha.includes(\"/\")) {\n    // Suponemos formato: YYYY/MM/DD\n    const partes = fecha.split(\"/\");\n    fechaFormateada = `${partes[0]}-${partes[1].padStart(2, \"0\")}-${partes[2].padStart(2, \"0\")}`;\n  } else if (fecha.includes(\"-\")) {\n    const partes = fecha.split(\"-\");\n    // Si el primer token tiene 4 dígitos, asumimos que ya es YYYY-MM-DD\n    if (partes[0].length === 4) {\n      fechaFormateada = `${partes[0]}-${partes[1].padStart(2, \"0\")}-${partes[2].padStart(2, \"0\")}`;\n    } else {\n      // Si no, asumimos formato DD-MM-YYYY y lo convertimos a YYYY-MM-DD\n      fechaFormateada = `${partes[2]}-${partes[1].padStart(2, \"0\")}-${partes[0].padStart(2, \"0\")}`;\n    }\n  } else {\n    // Si la fecha no tiene \"/\" ni \"-\", puede ser de tipo texto o numérico separado por espacios.\n    const partes = fecha.split(\" \");\n    // Si el primer token es numérico, suponemos formato: DD MM YYYY (por ejemplo, \"15 02 2025\")\n    if (!isNaN(partes[0])) {\n      const dia = partes[0].padStart(2, \"0\");\n      const mes = partes[1].padStart(2, \"0\");\n      const año = partes[2].trim();\n      fechaFormateada = `${año}-${mes}-${dia}`;\n    } else {\n      // Caso de fecha en formato \"Mes DD, YYYY\" (por ejemplo, \"Febrero 15, 2025\")\n      const mesTexto = partes[0].toLowerCase();\n      const mapaMeses = {\n        \"enero\": \"01\",\n        \"febrero\": \"02\",\n        \"marzo\": \"03\",\n        \"abril\": \"04\",\n        \"mayo\": \"05\",\n        \"junio\": \"06\",\n        \"julio\": \"07\",\n        \"agosto\": \"08\",\n        \"septiembre\": \"09\",\n        \"octubre\": \"10\",\n        \"noviembre\": \"11\",\n        \"diciembre\": \"12\"\n      };\n      const dia = partes[1].replace(\",\", \"\").padStart(2, \"0\");\n      const año = partes[2].trim();\n      const mesNumero = mapaMeses[mesTexto] || \"00\";\n      fechaFormateada = `${año}-${mesNumero}-${dia}`;\n    }\n  }\n  \n  // Actualiza el campo Fecha_Pedido con el nuevo formato\n  item.json.Fecha_Pedido = fechaFormateada;\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -120
+      ],
+      "id": "918a8529-0031-4333-90d7-cb69be974458",
+      "name": "Formateando fechas"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  if(item.json.Cliente) {\n    // Elimina espacios al principio y al final, y reemplaza múltiples espacios internos por uno solo\n    item.json.Cliente = item.json.Cliente.trim().replace(/\\s+/g, \" \");\n  }\n}\n\nreturn $input.all();\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        -120
+      ],
+      "id": "a0e0e16d-fa5c-4ac3-b0d8-11b9b4c63cb5",
+      "name": "Limpieza espacios vacios"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  if (item.json.Valor) {\n    // Convierte a string y limpia espacios en blanco\n    let valor = item.json.Valor.toString().trim();\n    // Reemplaza la coma por punto, en caso de existir\n    valor = valor.replace(',', '.');\n    // Convierte el valor a número\n    let numero = parseFloat(valor);\n    // Formatea a dos decimales (devuelve un string)\n    item.json.Valor = numero.toFixed(2);\n  }\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -120
+      ],
+      "id": "486b1981-cc10-486b-b5da-e4df15b18539",
+      "name": "Comas por puntos en Valor"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "85a05d16-caf2-4f15-9288-5cd4ee5447bc",
+              "leftValue": "={{ $json.Estado_Entrega }}",
+              "rightValue": "Devuelto",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -220,
+        120
+      ],
+      "id": "c0e8fdc7-efc9-4bfc-9606-d7afcbcad6ea",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1xHuB1Rq4R0XHNsasrmfYnzoNZ80mH0AakeRR1ckZgt8",
+          "mode": "list",
+          "cachedResultName": "entregas_procesadas_1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xHuB1Rq4R0XHNsasrmfYnzoNZ80mH0AakeRR1ckZgt8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xHuB1Rq4R0XHNsasrmfYnzoNZ80mH0AakeRR1ckZgt8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID_Entrega": "={{ $json.ID_Entrega }}",
+            "Fecha_Pedido": "={{ $json.Fecha_Pedido }}",
+            "Cliente": "={{ $json.Cliente }}",
+            "Correo_Cliente": "={{ $json.Correo_Cliente }}",
+            "Ciudad": "={{ $json.Ciudad }}",
+            "Estado_Entrega": "={{ $json.Estado_Entrega }}",
+            "Valor": "={{ $json.Valor }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ID_Entrega",
+              "displayName": "ID_Entrega",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fecha_Pedido",
+              "displayName": "Fecha_Pedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Correo_Cliente",
+              "displayName": "Correo_Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ciudad",
+              "displayName": "Ciudad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estado_Entrega",
+              "displayName": "Estado_Entrega",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Valor",
+              "displayName": "Valor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        120
+      ],
+      "id": "579412d1-1977-4d7c-abd7-f14cfeda4ea0",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9Ru3UzafX1JvMYvk",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Obtener los datos de las entregas del input del nodo\nconst deliveries = items.map(item => item.json);\n\n// 2. Calcular el número total de entregas\nconst totalDeliveries = deliveries.length;\n\n// 3. Filtrar entregas pendientes y agruparlas por ciudad\nconst pendingDeliveries = deliveries.filter(d => d.Estado_Entrega === \"Pendiente\");\nconst pendingByCity = {};\npendingDeliveries.forEach(d => {\n  pendingByCity[d.Ciudad] = (pendingByCity[d.Ciudad] || 0) + 1;\n});\n\n// 4. Construir la lista de ciudades con entregas pendientes y su cuenta\nlet pendingCitiesSummary = \"\";\nif (Object.keys(pendingByCity).length > 0) {\n  for (const city in pendingByCity) {\n    pendingCitiesSummary += `- ${city}: ${pendingByCity[city]}\\n`;\n  }\n} else {\n  pendingCitiesSummary = \"Ninguna\\n\";\n}\n\n// 5. Calcular el monto total de entregas realizadas (Estado_Entrega \"Entregado\")\nconst deliveredDeliveries = deliveries.filter(d => d.Estado_Entrega === \"Entregado\");\nconst totalDeliveredAmount = deliveredDeliveries.reduce((sum, d) => sum + parseFloat(d.Valor), 0);\n\n// 6. Crear el resumen en el formato deseado\nconst summary = `Total de entregas procesadas: ${totalDeliveries}\nCiudades con más entregas pendientes:\n${pendingCitiesSummary}Monto total de entregas realizadas: ${totalDeliveredAmount.toFixed(2)}`;\n\n// 7. Devolver el resultado para usarlo en otro nodo (por ejemplo, Google Docs o escribir un archivo)\nreturn [{ json: { summary } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        120
+      ],
+      "id": "eab818df-e11b-4b3a-a2b0-768928d9f130",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Correo_Cliente }}",
+        "subject": "Tu pedido está en camino 🚚",
+        "emailType": "text",
+        "message": "=Hola {{ $json.Cliente }}, tu pedido con ID {{ $json.ID_Entrega }} está en camino y serán entregados pronto",
+        "options": {
+          "appendAttribution": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        320
+      ],
+      "id": "88a30326-e6af-47a6-bb43-396dd818d8e6",
+      "name": "Gmail",
+      "webhookId": "af6dd3a9-60c5-4ea1-8526-f37ece4b288f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9gfoiCWWq5QQOdQl",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9f94f212-93ea-4141-8f1b-cd4fe8cce2fb",
+              "leftValue": "={{ $json.Estado_Entrega }}",
+              "rightValue": "Pendiente",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -40,
+        400
+      ],
+      "id": "00f5482e-63ef-4fe0-8834-f573a45afecf",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Correo_Cliente }}",
+        "subject": "Tu pedido ha sido entregado 🎉",
+        "emailType": "text",
+        "message": "=Hola  {{ $json.Cliente }}, tu pedido con ID {{ $json.ID_Entrega }} ha sido entregado con éxito \nGracias por confiar en nosotros ",
+        "options": {
+          "appendAttribution": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        500
+      ],
+      "id": "dd05cf81-8ddb-41fa-833c-157125c4518a",
+      "name": "Gmail1",
+      "webhookId": "af6dd3a9-60c5-4ea1-8526-f37ece4b288f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9gfoiCWWq5QQOdQl",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "summary",
+        "options": {
+          "fileName": "reporte_resumen"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        120
+      ],
+      "id": "b340c801-f4b9-4684-9b66-21c5faea041b",
+      "name": "Convert to File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Formateando fechas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formateando fechas": {
+      "main": [
+        [
+          {
+            "node": "Limpieza espacios vacios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpieza espacios vacios": {
+      "main": [
+        [
+          {
+            "node": "Comas por puntos en Valor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comas por puntos en Valor": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "81e44feb-d775-4033-93c5-dda6f6ed104f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bc6c083e4fc1877f7840ee98654d9f110eb11a8d2d5f7f9067fac479150ca2c0"
+  },
+  "id": "BWtxcGGqFnIJiAVq",
+  "tags": []
+}
